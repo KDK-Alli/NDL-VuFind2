@@ -79,7 +79,8 @@ class SolrQdc extends \VuFind\RecordDriver\SolrDefault
         $abstracts = [];
         $abstract = '';
         $lang = '';
-        foreach ($this->getXmlRecord()->xpath('/qualifieddc/abstract') as $node) {
+        $xml = $this->getXmlRecord();
+        foreach ($xml->abstract ?? [] as $node) {
             $abstract = (string)$node;
             $lang = (string)$node['lang'];
             if ($lang == 'en') {
@@ -89,6 +90,21 @@ class SolrQdc extends \VuFind\RecordDriver\SolrDefault
         }
 
         return $abstracts;
+    }
+
+    /**
+     * Get descriptions as summary
+     *
+     * @return array
+     */
+    public function getSummary(): array
+    {
+        $xml = $this->getXmlRecord();
+        $results = [];
+        foreach ($xml->description ?? [] as $description) {
+            $results[] = (string)$description;
+        }
+        return $results;
     }
 
     /**
@@ -255,6 +271,32 @@ class SolrQdc extends \VuFind\RecordDriver\SolrDefault
         }
 
         return array_values(array_unique($result));
+    }
+
+    /**
+     * Get an array of all ISSNs associated with the record (may be empty).
+     *
+     * @return array
+     */
+    public function getISSNs(): array
+    {
+        $result = [];
+        $xml = $this->getXmlRecord();
+        foreach ([$xml->identifier, $xml->isFormatOf] as $field) {
+            foreach ($field as $identifier) {
+                if ((string)$identifier['type'] === 'issn') {
+                    $result[] = $identifier;
+                    continue;
+                }
+                $trimmed = trim($identifier);
+                if (preg_match('{(issn:)[\S]{4}\-[\S]{4}}', $trimmed)) {
+                    $exploded = explode(':', $trimmed);
+                    $result[] = $exploded[1];
+                }
+            }
+        }
+
+        return $result;
     }
 
     /**

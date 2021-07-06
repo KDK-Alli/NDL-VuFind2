@@ -119,7 +119,6 @@ class RecordDataFormatterFactory
                 'context' => ['class' => 'recordGenres']
             ]
         );
-
         $setTemplateLine(
             'Age Limit', 'getAgeLimit', 'data-escapeHtml.phtml',
             [
